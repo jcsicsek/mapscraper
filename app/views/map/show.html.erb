@@ -1,0 +1,90 @@
+<html>
+	<head>
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+		<style type="text/css">
+			html { height: 100% }
+			body { height: 100%; margin: 0; padding: 0 }
+			#map_canvas { height: 100% }
+		</style>
+		<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
+		<script type="text/javascript">
+			var map;
+			var geocoder;
+			var groundOverlay;
+			function initialize() {
+				geocoder = new google.maps.Geocoder();
+				var address = "<%= @address %>";
+				var latlng = new google.maps.LatLng(-34.397, 150.644);
+
+				var options = {
+					center: latlng,
+					zoom: 19,
+					zoomControl: false,
+					mapTypeControl: false,
+					minZoom: 19,
+					maxZoom: 19,
+					streetViewControl: false,
+					scrollwheel: false,
+					mapTypeId: google.maps.MapTypeId.ROADMAP
+				};
+				map = new google.maps.Map(document.getElementById("map_canvas"), options);
+				geocoder.geocode( { 'address': address}, function(results, status) {
+					if (status == google.maps.GeocoderStatus.OK) {
+						map.setCenter(results[0].geometry.location);
+						var bounds = map.getBounds();
+						var image = "<%= @image_url %>";
+
+						groundOverlay = new google.maps.GroundOverlay(image, bounds);
+						groundOverlay.setMap(map);
+					}
+					else {
+					}
+				});
+
+			}
+			function overlay()
+			{
+				var show = document.getElementById('view_overlay').checked;
+				//var show = false;
+				if (show)
+				{
+					groundOverlay.setMap(map);
+				}
+				else
+				{
+					groundOverlay.setMap(null);
+				}
+			}
+			function onSubmit()
+			{
+				address = document.getElementById('update_address').value;
+				geocoder.geocode( { 'address': address}, function(results, status) {
+					if (status == google.maps.GeocoderStatus.OK) {
+						map.setCenter(results[0].geometry.location);
+					}
+					else {
+						alert('Invalid address.');
+					}
+				});
+			}
+
+		</script>
+	</head>
+	<body onload="initialize()">
+		<center>
+			<h1>Google Maps Building Data Scraper</h1>
+			<i>Jeff Csicsek, March 2012</i><br /><br />
+			<%= form_for "update", :url => root_path, :html => {:onSubmit => 'return onSubmit();'} do |f| %>
+				<%= f.label :address, "Address: " %>
+				<%= f.text_field :address, :value => @address %>
+				<%= f.submit "Submit" %><br />
+			<% end %>
+			<%= label_tag 'view_overlay', 'Show building data on map' %>
+			<%= check_box_tag 'view_overlay', 1, true, :onChange => "overlay();" %>
+			<br />
+			<%= @time_message %>
+			<br />
+			<div id="map_canvas" style="width:640px; height:640px;"></div>
+		</center>
+	</body>
+</html>
